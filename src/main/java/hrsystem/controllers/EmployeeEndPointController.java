@@ -1,7 +1,7 @@
-package HRSystem.controllers;
+package hrsystem.controllers;
 
-import HRSystem.model.Employee;
-import HRSystem.utils.EntryDataValidator;
+import hrsystem.model.Employee;
+import hrsystem.utils.EntryDataValidator;
 
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +15,7 @@ public class EmployeeEndPointController {
 
     //Initialize instances
     private EntryDataValidator validator = new EntryDataValidator();
-    private String jdbcURL = "jdbc:sqlite:/C:/Users/User/Desktop/SQlite/DB_Browser_for_SQLite/HRSystem.db";
+    private String jdbcURL = "jdbc:sqlite:/C:/Users/User/Desktop/SQlite/DB_Browser_for_SQLite/hrsystem.db";
 
     /**
      * Writes out all the employees from database
@@ -39,7 +39,8 @@ public class EmployeeEndPointController {
                 employeesFromDatabase.add(employee);
             }
         } catch (SQLException e) {
-            System.err.println("Error retrieving employees from the database: " + e.getMessage());
+            System.err.println("Error retrieving employees from the database: ");
+            e.printStackTrace();
         }
         return employeesFromDatabase;
     }
@@ -68,7 +69,8 @@ public class EmployeeEndPointController {
             statement.setString(4, employee.getEmployeePosition());
             statement.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("Error inserting employee into the database: " + e.getMessage());
+            System.err.println("Error inserting employee into the database: ");
+            e.printStackTrace();
             return "Failed to add employee to the database.";
         }
         return "Employee was successfully added to the database.";
@@ -105,7 +107,8 @@ public class EmployeeEndPointController {
                 return "Employee with ID " + employeeId + " not found.";
             }
         } catch (SQLException e) {
-            System.err.println("Error updating employee in the database: " + e.getMessage());
+            System.err.println("Error updating employee in the database: ");
+            e.getStackTrace();
             return "Failed to update employee.";
         }
     }
@@ -129,7 +132,8 @@ public class EmployeeEndPointController {
                 return "Employee with ID " + employeeId + " not found.";
             }
         } catch (SQLException e) {
-            System.err.println("Error deleting employee from the database: " + e.getMessage());
+            System.err.println("Error deleting employee from the database: ");
+            e.getStackTrace();
             return "Failed to delete employee.";
         }
     }

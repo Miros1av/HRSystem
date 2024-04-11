@@ -1,4 +1,4 @@
-package HRSystem.utils;
+package hrsystem.utils;
 
 public class EntryDataValidator {
 

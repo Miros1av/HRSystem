@@ -1,4 +1,4 @@
-package HRSystem.model;
+package hrsystem.model;
 
 public class Employee {
         /**

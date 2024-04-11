@@ -31,12 +31,6 @@
             <version>20231013</version>
         </dependency>
 
-        <!-- SLF4J API -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
 
         <!-- SQLite -->
         <dependency>
