@@ -3,71 +3,86 @@ package HRSystem.controllers;
 import HRSystem.model.Employee;
 import HRSystem.utils.EntryDataValidator;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/hrsystem")
-
 public class EmployeeEndPointController {
 
-    //Initialize of instances
-    private List<Employee> listOfEmployees = new ArrayList<>();
-    private final EntryDataValidator validator = new EntryDataValidator();
+    //Initialize instances
+    private EntryDataValidator validator = new EntryDataValidator();
+    private String jdbcURL = "jdbc:sqlite:/C:/Users/User/Desktop/SQlite/DB_Browser_for_SQLite/HRSystem.db";
 
     /**
-     * Writes out all the employees in the list
+     * Writes out all the employees from database
+     *
      * @return list of all employees
      */
     @GetMapping
     public List<Employee> getAllEmployees() {
-        return listOfEmployees;
+        List<Employee> employeesFromDatabase = new ArrayList<>();
+        try (Connection connection = DriverManager.getConnection(jdbcURL)) {
+            String sql = "SELECT * FROM AllEmployees";
+            Statement statement = connection.createStatement();
+            ResultSet result = statement.executeQuery(sql);
+            while (result.next()) {
+                Long id = result.getLong("employeeID");
+                String name = result.getString("employeeName");
+                String surname = result.getString("employeeSurname");
+                String age = result.getString("employeeAge");
+                String position = result.getString("employeePosition");
+                Employee employee = new Employee(id, name, surname, age, position);
+                employeesFromDatabase.add(employee);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving employees from the database: " + e.getMessage());
+        }
+        return employeesFromDatabase;
     }
 
     /**
-     * Add new employee to the list with all parameters
+     * Add new employee to the database with all parameters
+     *
      * @param employee
-     * @return Confirmation about successful creation.
+     * @return Confirmation about successful creation
      */
     @PostMapping
     public String createEmployee(@RequestBody Employee employee) {
-        // Check if any required parameter is null or empty
         if (validator.isAnyParameterNullOrEmpty(employee.getEmployeeName(),
                 employee.getEmployeeSurname(),
                 employee.getEmployeeAge(),
                 employee.getEmployeePosition())) {
-            return "All parameters are required for creating an employee.";
+            return "All parameters are required for adding an employee to the database.";
         }
 
-        Long maxId = 0L; // Initialize maxId with 0
-        // Loop through each employee in the list to find the maximum ID
-        for (Employee e : listOfEmployees) {
-            if (e.getEmployeeId() > maxId) {
-                maxId = e.getEmployeeId(); // Update maxId if a larger ID is found
-            }
+        try (Connection connection = DriverManager.getConnection(jdbcURL)) {
+            String sql = "INSERT INTO AllEmployees (employeeName, employeeSurname, employeeAge, employeePosition) VALUES (?, ?, ?, ?)";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, employee.getEmployeeName());
+            statement.setString(2, employee.getEmployeeSurname());
+            statement.setString(3, employee.getEmployeeAge());
+            statement.setString(4, employee.getEmployeePosition());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error inserting employee into the database: " + e.getMessage());
+            return "Failed to add employee to the database.";
         }
-
-        // Increase maximum ID by 1 to generate a new ID for the new employee
-        Long newId = maxId + 1;
-        // Set the new ID for the employee and add it to the list
-        employee.setEmployeeId(newId);
-        listOfEmployees.add(employee);
-
-        // Return a message indicating that the employee was successfully created with information about assigned ID.
-        return "Employee was successfully added. Employee ID: " + newId;
+        return "Employee was successfully added to the database.";
     }
 
     /**
-     * Update employee in the list according selected employeeID, any parameter can be changed except ID
+     * Update employee in the database according selected employee ID, any parameter can be changed except ID
+     *
      * @param employeeId ID of employee
      * @param updatedEmployee employee with updated parameters
      * @return Confirmation about successful update.
      */
     @PutMapping("/{employeeId}")
     public String updateEmployeeDetails(@PathVariable Long employeeId, @RequestBody Employee updatedEmployee) {
-        // Check if any required parameter is null or empty
         if (validator.isAnyParameterNullOrEmpty(updatedEmployee.getEmployeeName(),
                 updatedEmployee.getEmployeeSurname(),
                 updatedEmployee.getEmployeeAge(),
@@ -75,34 +90,47 @@ public class EmployeeEndPointController {
             return "All parameters are required for updating an employee.";
         }
 
-        for (Employee employee : listOfEmployees) {
-            if (employee.getEmployeeId().equals(employeeId)) {
-                // Update the employee details
-                employee.setEmployeeName(updatedEmployee.getEmployeeName());
-                employee.setEmployeeSurname(updatedEmployee.getEmployeeSurname());
-                employee.setEmployeeAge(updatedEmployee.getEmployeeAge());
-                employee.setEmployeePosition(updatedEmployee.getEmployeePosition());
-                // Return a message indicating that the employee was successfully updated
-                return "Employee with ID " + employeeId + " was updated.";
+        try (Connection connection = DriverManager.getConnection(jdbcURL)) {
+            String sql = "UPDATE AllEmployees SET employeeName = ?, employeeSurname = ?, employeeAge = ?, employeePosition = ? WHERE employeeId = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, updatedEmployee.getEmployeeName());
+            statement.setString(2, updatedEmployee.getEmployeeSurname());
+            statement.setString(3, updatedEmployee.getEmployeeAge());
+            statement.setString(4, updatedEmployee.getEmployeePosition());
+            statement.setLong(5, employeeId);
+            int rowsUpdated = statement.executeUpdate();
+            if (rowsUpdated > 0) {
+                return "Employee with ID " + employeeId + " was successfully updated.";
+            } else {
+                return "Employee with ID " + employeeId + " not found.";
             }
+        } catch (SQLException e) {
+            System.err.println("Error updating employee in the database: " + e.getMessage());
+            return "Failed to update employee.";
         }
-        return "Employee with ID " + employeeId + " not found.";
     }
 
     /**
-     * Remove employee from the list according selected employeeID
+     * Remove employee from the database according selected employee ID.
+     *
      * @param employeeId ID of employee
-     * @return Confirmation about successful erasing.
+     * @return Confirmation about successful erasing
      */
     @DeleteMapping("/{employeeId}")
     public String deleteEmployee(@PathVariable Long employeeId) {
-        for (Employee employee : listOfEmployees) {
-            if (employee.getEmployeeId().equals(employeeId)) {
-                listOfEmployees.remove(employee);
-                return "Employee with ID " + employeeId + " was removed.";
+        try (Connection connection = DriverManager.getConnection(jdbcURL)) {
+            String sql = "DELETE FROM AllEmployees WHERE employeeId = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setLong(1, employeeId);
+            int rowsDeleted = statement.executeUpdate();
+            if (rowsDeleted > 0) {
+                return "Employee with ID " + employeeId + " was successfully removed.";
+            } else {
+                return "Employee with ID " + employeeId + " not found.";
             }
+        } catch (SQLException e) {
+            System.err.println("Error deleting employee from the database: " + e.getMessage());
+            return "Failed to delete employee.";
         }
-        return "Employee with ID " + employeeId + " not found.";
     }
-
 }
