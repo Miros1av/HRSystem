@@ -137,4 +137,29 @@ public class EmployeeEndPointController {
             return "Failed to delete employee.";
         }
     }
+
+    /**
+     * Count employees on each position and count average of their age
+     * @return list with result position, sum of employees, average age
+     */
+    @GetMapping("/statistic")
+    public List<String> getEmployeeStatistic() {
+        List<String> statistics = new ArrayList<>();
+        try (Connection connection = DriverManager.getConnection(jdbcURL)) {
+            String sql = "SELECT employeePosition AS Position, COUNT(*) AS Count_of_employees, AVG(employeeAge) AS Average_Age FROM AllEmployees GROUP BY employeePosition ORDER BY Count_of_employees DESC;";
+            try (Statement statement = connection.createStatement();
+                 ResultSet resultSet = statement.executeQuery(sql)) {
+                while (resultSet.next()) {
+                    String position = resultSet.getString("Position");
+                    int employeeCount = resultSet.getInt("Count_of_employees");
+                    double averageAge = resultSet.getDouble("Average_Age");
+                    String row = position + ", " + employeeCount + ", " + averageAge;
+                    statistics.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return statistics;
+    }
 }
