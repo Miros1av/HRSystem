@@ -23,7 +23,7 @@ It can be also used for simple statistic, where employees are count according th
 - or by adding and removing field and changing name and type manually (it is quite intuitive GUI).
 
 
-### In the program full path to DB file is necessary to change (class EmployeeEndPointController, line 18). 
+### In the program full path to DB file is necessary to change (class EmployeeRepository, line 14). 
 - Now there is set "jdbc:sqlite:/C:/Users/User/Desktop/SQlite/DB_Browser_for_SQLite/hrsystem.db" which was used in my case (my DB file was stored in downloaded folder with SQLite on desktop).
 - When DB file is set, program can be started. It required port 8080. 
 
